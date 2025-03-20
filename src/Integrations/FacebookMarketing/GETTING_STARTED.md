@@ -1,4 +1,4 @@
-To receive data from the FacebookMarketing source, please make a copy of the file ["Facebook Marketing. Template"](https://docs.google.com/spreadsheets/d/1OgpGMnQqUpS23rmOyA2gTVO2FK48oPS7tJGBp9NYJy4/edit?usp=sharing) (*File -> Make a copy*). 
+To receive data from the FacebookMarketing source, please make a copy of the file ["Facebook Marketing. Template"](https://docs.google.com/spreadsheets/d/1OgpGMnQqUpS23rmOyA2gTVO2FK48oPS7tJGBp9NYJy4/copy). 
 
 Fill in the required information:
 - Start date
