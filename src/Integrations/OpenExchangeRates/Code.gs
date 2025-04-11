@@ -26,7 +26,10 @@ function importNewData() {
     new OWOX.OpenExchangeRatesConnector(config.setParametersValues(       // connector with parameter's values added from properties 
       PropertiesService.getDocumentProperties().getProperties()
     )),                          
-    new OWOX.GoogleSheetsStorage(config, ["date", "base", "currency"] )   // storage 
+    // Storage for Google Sheets
+    new OWOX.GoogleSheetsStorage(config, ["date", "base", "currency"]),
+    // Storage for BigQuery
+    // new OWOX.GoogleBigQueryStorage(config, ["date", "base", "currency"], OpenExchangeRatesBigQuerySchema) 
   );
 
   pipeline.run();
@@ -51,7 +54,7 @@ function manageCredentials() {
 
   const response = ui.prompt(
     currentKey ? 'Update your App ID' : 'Add your App Id',
-    'To import data from Open Exchange Rates, you need to add an App ID. Here’s how you can get it: https://support.openexchangerates.org/article/121-your-app-id',
+    'To import data from Open Exchange Rates, you need to add an App ID. Here's how you can get it: https://support.openexchangerates.org/article/121-your-app-id',
     ui.ButtonSet.OK_CANCEL
   );
 

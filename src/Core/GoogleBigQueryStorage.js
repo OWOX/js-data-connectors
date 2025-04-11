@@ -400,4 +400,16 @@ var GoogleBigQueryStorage = class GoogleBigQueryStorage extends AbstractStorage 
   
     }
 
+  //---- isEmpty ----------------------------------------------------
+    /**
+     * Checks if the storage is empty
+     * 
+     * @return {boolean} true if storage is empty, false otherwise
+     */
+    isEmpty() {
+      const query = `SELECT COUNT(*) as count FROM \`${this.config.DestinationDatasetID.value}.${this.config.DestinationTableName.value}\``;
+      const result = this.executeQuery(query);
+      return result.rows[0].f[0].v === "0";
+    }
+
 }
