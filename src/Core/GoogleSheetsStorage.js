@@ -355,10 +355,44 @@ var GoogleSheetsStorage = class GoogleSheetsStorage extends AbstractStorage {
      * @param columnIndex (integer) optional; column index
      */
     addColumn(columnName, columnIndex = 1) {
-    
+
       // header of the column at the desider index is not empty
-      if( this.SHEET.getRange(`A${columnIndex}`).getValue() != "" ) {
-        this.SHEET.insertColumns(columnIndex);
+      try {
+        if( this.SHEET.getRange(`A${columnIndex}`).getValue() != "" ) {
+          this.SHEET.insertColumns(columnIndex);
+        }
+      } catch (e) {
+        // If the column at the desider index is not empty, we need to insert a new column after the desider index
+        // It may happend if in first portion of data we haven't this column and we add it later
+        
+        // Get the number of columns in the sheet
+        const numColumns = this.SHEET.getMaxColumns();
+        
+        // Check if columnIndex is out of bounds
+        if (columnIndex <= 0 || columnIndex > numColumns + 1) {
+          throw new Error(`Column index ${columnIndex} is out of bounds (1-${numColumns+1})`);
+        }
+        
+        // Find an empty column header
+        let foundEmpty = false;
+        while(columnIndex <= numColumns) {
+          // Only check existing columns
+          if(this.SHEET.getRange(1, columnIndex).getValue() == "") {
+            foundEmpty = true;
+            break;
+          }
+          columnIndex++;
+        }
+        
+        // If we didn't find an empty column, create a new one
+        if (!foundEmpty) {
+          this.SHEET.insertColumnAfter(numColumns);
+          columnIndex = numColumns + 1;
+        } else {
+          // Otherwise, insert at the found position
+
+          this.SHEET.insertColumnBefore(columnIndex);
+        }
       }
     
       this.SHEET.getRange(1, columnIndex).setValue(columnName); 
