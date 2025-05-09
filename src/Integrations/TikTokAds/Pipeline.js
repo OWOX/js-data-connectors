@@ -229,111 +229,12 @@ var TikTokAdsPipeline = class TikTokAdsPipeline extends AbstractPipeline {
         
         if (data.length) {
           this.config.logMessage(`${data.length} rows of ${nodeName} were fetched for advertiser ${advertiserId}`);
-          
-          // Filter out data that might be too large for Google Sheets
-          const MAX_FIELDS_PER_RECORD = 200; // Google Sheets has limits on cells per row
-          
-          // Filter out fields exceeding limits
-          let filteredData = data.map(record => {
-            const fieldCount = Object.keys(record).length;
-            
-            // If record has too many fields, trim it down
-            if (fieldCount > MAX_FIELDS_PER_RECORD) {
-              this.config.logMessage(`⚠️ Record has ${fieldCount} fields, trimming to ${MAX_FIELDS_PER_RECORD}`);
-              
-              // Keep only the most important fields
-              let trimmedRecord = {};
-              
-              // First, ensure we keep the unique key fields
-              if (this.connector.fieldsSchema[nodeName] && 
-                  this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                for (const keyField of this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                  if (keyField in record) {
-                    trimmedRecord[keyField] = record[keyField];
-                  }
-                }
-              }
-              
-              // Then add other fields until we reach the limit
-              const fieldsToAdd = Object.keys(record).filter(
-                key => !(key in trimmedRecord)
-              ).slice(0, MAX_FIELDS_PER_RECORD - Object.keys(trimmedRecord).length);
-              
-              for (const field of fieldsToAdd) {
-                trimmedRecord[field] = record[field];
-              }
-              
-              return trimmedRecord;
-            }
-            
-            return record;
-          });
-          
+
           try {
-            this.getStorageByNode(nodeName, fields).saveData(filteredData);
+            this.getStorageByNode(nodeName, fields).saveData(data);
           } catch (storageError) {
             this.config.logMessage(`❌ Error saving data to storage: ${storageError.message}`);
-            
-            if (storageError.message.includes("columns are out of bounds")) {
-              this.config.logMessage(`🔄 Trying with reduced field set...`);
-              
-              // Further reduce fields to only essential ones
-              filteredData = filteredData.map(record => {
-                const essentialRecord = {};
-                
-                // Keep only the unique key fields and a few basic fields
-                if (this.connector.fieldsSchema[nodeName] && 
-                    this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                  for (const keyField of this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                    if (keyField in record) {
-                      essentialRecord[keyField] = record[keyField];
-                    } else if (keyField === 'advertiser_id') {
-                      // Ensure advertiser_id is always present
-                      essentialRecord['advertiser_id'] = advertiserId;
-                    }
-                  }
-                }
-                
-                // Add a few common fields if they exist
-                const commonFields = ['name', 'status', 'create_time', 'modify_time'];
-                for (const field of commonFields) {
-                  if (field in record) {
-                    essentialRecord[field] = record[field];
-                  }
-                }
-                
-                return essentialRecord;
-              });
-              
-              this.getStorageByNode(nodeName, fields).saveData(filteredData);
-            } else if (storageError.message.includes("value is required for Unique Key")) {
-              this.config.logMessage(`🔄 Missing unique key field, adding required fields...`);
-              
-              // Find the missing key field
-              const missingKeyMatch = storageError.message.match(/'([^']+)' value is required/);
-              const missingKey = missingKeyMatch ? missingKeyMatch[1] : null;
-              
-              // Add missing fields to all records
-              if (missingKey) {
-                this.config.logMessage(`Adding missing key field: ${missingKey}`);
-                
-                filteredData = filteredData.map(record => {
-                  if (!(missingKey in record)) {
-                    // Use the appropriate value based on the field
-                    if (missingKey === 'advertiser_id') {
-                      record[missingKey] = advertiserId;
-                    }
-                  }
-                  return record;
-                });
-                
-                this.getStorageByNode(nodeName, fields).saveData(filteredData);
-              } else {
-                throw storageError; // Re-throw if we can't determine the missing key
-              }
-            } else {
-              throw storageError; // Re-throw if it's another type of error
-            }
+            console.error(`Error details: ${storageError.stack}`);
           }
         } else {
           this.config.logMessage(`No rows of ${nodeName} were fetched for advertiser ${advertiserId}`);
@@ -381,129 +282,15 @@ var TikTokAdsPipeline = class TikTokAdsPipeline extends AbstractPipeline {
             let data = this.connector.fetchData(nodeName, advertiserId, timeSeriesNodes[nodeName], currentDate);
 
             // Process fetched records
-            if (!data.length) {
-              if (daysShift == 0) {
-                this.config.logMessage(`ℹ️ No records have been fetched`);
-              }
+            if (!data.length && daysShift == 0) {
+              this.config.logMessage(`ℹ️ No records have been fetched`);
             } else {
               this.config.logMessage(`${data.length} records were fetched`);
-              
-              // Filter out data that might be too large for Google Sheets
-              const MAX_FIELDS_PER_RECORD = 200; // Google Sheets has limits on cells per row
-              
-              // Filter out fields exceeding limits
-              let filteredData = data.map(record => {
-                const fieldCount = Object.keys(record).length;
-                
-                // If record has too many fields, trim it down
-                if (fieldCount > MAX_FIELDS_PER_RECORD) {
-                  this.config.logMessage(`⚠️ Record has ${fieldCount} fields, trimming to ${MAX_FIELDS_PER_RECORD}`);
-                  
-                  // Keep only the most important fields
-                  let trimmedRecord = {};
-                  
-                  // First, ensure we keep the unique key fields
-                  if (this.connector.fieldsSchema[nodeName] && 
-                      this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                    for (const keyField of this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                      if (keyField in record) {
-                        trimmedRecord[keyField] = record[keyField];
-                      }
-                    }
-                  }
-                  
-                  // Then add other fields until we reach the limit
-                  const fieldsToAdd = Object.keys(record).filter(
-                    key => !(key in trimmedRecord)
-                  ).slice(0, MAX_FIELDS_PER_RECORD - Object.keys(trimmedRecord).length);
-                  
-                  for (const field of fieldsToAdd) {
-                    trimmedRecord[field] = record[field];
-                  }
-                  
-                  return trimmedRecord;
-                }
-                
-                return record;
-              });
-              
               try {
-                this.getStorageByNode(nodeName, timeSeriesNodes[nodeName]).saveData(filteredData);
+                this.getStorageByNode(nodeName, timeSeriesNodes[nodeName]).saveData(data);
               } catch (storageError) {
                 this.config.logMessage(`❌ Error saving data to storage: ${storageError.message}`);
-                
-                if (storageError.message.includes("columns are out of bounds")) {
-                  this.config.logMessage(`🔄 Trying with reduced field set...`);
-                  
-                  // Further reduce fields to only essential ones
-                  filteredData = filteredData.map(record => {
-                    const essentialRecord = {};
-                    
-                    // Keep only the unique key fields and a few basic fields
-                    if (this.connector.fieldsSchema[nodeName] && 
-                        this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                      for (const keyField of this.connector.fieldsSchema[nodeName].uniqueKeys) {
-                        if (keyField in record) {
-                          essentialRecord[keyField] = record[keyField];
-                        } else if (keyField === 'advertiser_id') {
-                          // Ensure advertiser_id is always present
-                          essentialRecord['advertiser_id'] = advertiserId;
-                        }
-                      }
-                    }
-                    
-                    // For insights, prioritize important metrics
-                    if (nodeName === 'ad_insights') {
-                      const priorityFields = [
-                        'date_start', 'stat_time_day', 'advertiser_id', 'campaign_id', 
-                        'adgroup_id', 'ad_id', 'impressions', 'clicks', 'spend', 
-                        'conversions', 'ctr', 'cpc', 'cpm'
-                      ];
-                      
-                      for (const field of priorityFields) {
-                        if (field in record) {
-                          essentialRecord[field] = record[field];
-                        } else if (field === 'advertiser_id') {
-                          // Ensure advertiser_id is always present
-                          essentialRecord['advertiser_id'] = advertiserId;
-                        }
-                      }
-                    }
-                    
-                    return essentialRecord;
-                  });
-                  
-                  this.getStorageByNode(nodeName, timeSeriesNodes[nodeName]).saveData(filteredData);
-                } else if (storageError.message.includes("value is required for Unique Key")) {
-                  this.config.logMessage(`🔄 Missing unique key field, adding required fields...`);
-                  
-                  // Find the missing key field
-                  const missingKeyMatch = storageError.message.match(/'([^']+)' value is required/);
-                  const missingKey = missingKeyMatch ? missingKeyMatch[1] : null;
-                  
-                  // Add missing fields to all records
-                  if (missingKey) {
-                    this.config.logMessage(`Adding missing key field: ${missingKey}`);
-                    
-                    filteredData = filteredData.map(record => {
-                      if (!(missingKey in record)) {
-                        // Use the appropriate value based on the field
-                        if (missingKey === 'advertiser_id') {
-                          record[missingKey] = advertiserId;
-                        } else if (missingKey === 'stat_time_day' && 'date_start' in record) {
-                          record[missingKey] = record['date_start'];
-                        }
-                      }
-                      return record;
-                    });
-                    
-                    this.getStorageByNode(nodeName, timeSeriesNodes[nodeName]).saveData(filteredData);
-                  } else {
-                    throw storageError; // Re-throw if we can't determine the missing key
-                  }
-                } else {
-                  throw storageError; // Re-throw if it's another type of error
-                }
+                console.error(`Error details: ${storageError.stack}`);
               }
             }
           } catch (error) {
@@ -537,36 +324,6 @@ var TikTokAdsPipeline = class TikTokAdsPipeline extends AbstractPipeline {
       }
 
       let uniqueFields = this.connector.fieldsSchema[nodeName]["uniqueKeys"];
-      
-      // Special handling for ad_insights - adjust uniqueKeys based on data_level
-      if (nodeName === 'ad_insights') {
-        const dataLevel = this.config.DataLevel && this.config.DataLevel.value ? 
-                        this.config.DataLevel.value : "AUCTION_AD";
-                        
-        // Validate data level
-        const validDataLevels = ["AUCTION_ADVERTISER", "AUCTION_CAMPAIGN", "AUCTION_ADGROUP", "AUCTION_AD"];
-        if (!validDataLevels.includes(dataLevel)) {
-          this.config.logMessage(`⚠️ Invalid data_level: ${dataLevel}. Using default AUCTION_AD uniqueKeys.`);
-        } else {
-          // Adjust uniqueKeys based on data level
-          switch (dataLevel) {
-            case "AUCTION_ADVERTISER":
-              uniqueFields = ["advertiser_id", "stat_time_day"];
-              break;
-            case "AUCTION_CAMPAIGN":
-              uniqueFields = ["advertiser_id", "campaign_id", "stat_time_day"];
-              break;
-            case "AUCTION_ADGROUP":
-              uniqueFields = ["advertiser_id", "adgroup_id", "stat_time_day"];
-              break;
-            case "AUCTION_AD":
-            default:
-              uniqueFields = ["advertiser_id", "ad_id", "stat_time_day"];
-              break;
-          }
-          this.config.logMessage(`Using uniqueKeys for ${dataLevel} data level: ${uniqueFields.join(", ")}`);
-        }
-      }
 
       // Create storage instance (Google Sheets is the default storage)
       this.storages[nodeName] = new GoogleSheetsStorage(
