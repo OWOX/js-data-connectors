@@ -30,7 +30,7 @@ To use the TikTok Ads connector, you need to obtain an access token from the Tik
 2. Fill in the required information:
    - App name
    - App description
-   - Advertiser redirect URL ((this can be a placeholder like `https://localhost:8080` if you're just generating a token))
+   - Advertiser redirect URL (this can be a placeholder like `https://localhost:8080` if you're just generating a token)
 3. Chose access to the following scopes of permission:
    - Read Ad Account Information
    - Read Campaigns
@@ -43,23 +43,11 @@ To use the TikTok Ads connector, you need to obtain an access token from the Tik
 
 ### 3. Generate an Access Token
 
-#### Option 1: Using the Developer Console
+1. Copy Advertiser authorization URL and open the URL in your browser.
 
-1. In the TikTok for Developers portal, go to "My Apps" and select your app
-2. Navigate to the "Tools" section and select "Access Token Tool"
-3. Select the required scopes (`ads.read` and `advertiser.read`)
-4. Click "Generate Token"
-5. Copy the access token provided
+![TikTok URL](/src/Integrations/TikTokAds/res/tiktok_url.png)
 
-#### Option 2: Using OAuth Flow
-
-If you need to programmatically refresh tokens or want a more integrated approach:
-
-1. Redirect users to:
-   ```
-   https://ads.tiktok.com/marketing_api/auth?app_id=YOUR_APP_ID&redirect_uri=YOUR_REDIRECT_URI&state=YOUR_STATE&scope=ads.read,advertiser.read
-   ```
-2. After authentication, users will be redirected to your redirect URI with a code parameter
+2. After authentication, you'll see the link with the `auth_code`.
 3. Exchange this code for an access token by making a POST request to:
    ```
    https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/
