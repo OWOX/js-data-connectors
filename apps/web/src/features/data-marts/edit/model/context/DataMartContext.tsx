@@ -1,31 +1,34 @@
-import { useReducer, type ReactNode, useCallback } from 'react';
+import { type ReactNode, useCallback, useReducer } from 'react';
 import { DataMartContext } from './context.ts';
 import { initialState, reducer } from './reducer.ts';
 import { mapDataMartFromDto, mapLimitedDataMartFromDto } from '../mappers';
 import {
+  mapConnectorDefinitionToDto,
   mapSqlDefinitionToDto,
   mapTableDefinitionToDto,
-  mapViewDefinitionToDto,
   mapTablePatternDefinitionToDto,
+  mapViewDefinitionToDto,
 } from '../mappers/definition-mappers';
 import { dataMartService } from '../../../shared';
 import type {
   CreateDataMartRequestDto,
-  UpdateDataMartRequestDto,
+  UpdateDataMartConnectorDefinitionRequestDto,
   UpdateDataMartDefinitionRequestDto,
+  UpdateDataMartRequestDto,
   UpdateDataMartSqlDefinitionRequestDto,
   UpdateDataMartTableDefinitionRequestDto,
-  UpdateDataMartViewDefinitionRequestDto,
   UpdateDataMartTablePatternDefinitionRequestDto,
+  UpdateDataMartViewDefinitionRequestDto,
 } from '../../../shared/types/api';
 import type { DataStorage } from '../../../../data-storage/shared/model/types/data-storage';
 import { DataMartDefinitionType } from '../../../shared';
 import type {
+  ConnectorDefinitionConfig,
   DataMartDefinitionConfig,
   SqlDefinitionConfig,
   TableDefinitionConfig,
-  ViewDefinitionConfig,
   TablePatternDefinitionConfig,
+  ViewDefinitionConfig,
 } from '../types';
 
 // Props interface
@@ -170,6 +173,14 @@ export function DataMartProvider({ children }: DataMartProviderProps) {
             definition: mapTablePatternDefinitionToDto(definition as TablePatternDefinitionConfig),
           } as UpdateDataMartTablePatternDefinitionRequestDto;
           break;
+
+        case DataMartDefinitionType.CONNECTOR: {
+          requestData = {
+            definitionType: DataMartDefinitionType.CONNECTOR,
+            definition: mapConnectorDefinitionToDto(definition as ConnectorDefinitionConfig),
+          } as UpdateDataMartConnectorDefinitionRequestDto;
+          break;
+        }
 
         default:
           throw new Error(`Unsupported definition type: ${String(definitionType)}`);

@@ -1,3 +1,5 @@
+const { StorageType } = require('../../core/types/storage-definitions');
+
 /**
  * Source configuration for data mart runs
  */
@@ -69,9 +71,22 @@ class StorageConfig {
     if (!config.config) {
       throw new Error('Storage config object is required');
     }
-
-    this._name = config.name;
+    this._name = this._getStorageName(config.name);
     this._config = config.config;
+  }
+
+  /**
+   * Get the storage name
+   * @param {string} name
+   * @returns {string} Storage name
+   */
+  _getStorageName(name) {
+    if (name === StorageType.GOOGLE_BIGQUERY) {
+      return 'GoogleBigQuery';
+    } else if (name === StorageType.AWS_ATHENA) {
+      return 'AwsAthena';
+    }
+    return name;
   }
 
   /**

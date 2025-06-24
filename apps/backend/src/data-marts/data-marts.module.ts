@@ -13,6 +13,7 @@ import { CreateDataStorageService } from './use-cases/create-data-storage.servic
 import { UpdateDataStorageService } from './use-cases/update-data-storage.service';
 import { DataMart } from './entities/data-mart.entity';
 import { DataStorage } from './entities/data-storage.entity';
+import { DataMartRun } from './entities/data-mart-run.entity';
 import { dataStorageFacadesProviders } from './data-storage-types/data-storage-facades';
 import { dataStorageResolverProviders } from './data-storage-types/data-storage-providers';
 import { UpdateDataMartDefinitionService } from './use-cases/update-data-mart-definition.service';
@@ -23,10 +24,17 @@ import { UpdateDataMartTitleService } from './use-cases/update-data-mart-title.s
 import { ListDataStoragesService } from './use-cases/list-data-storages.service';
 import { DeleteDataStorageService } from './use-cases/delete-data-storage.service';
 import { DeleteDataMartService } from './use-cases/delete-data-mart.service';
+import { ConnectorController } from './controllers/connector.controller';
+import { AvailableConnectorService } from './use-cases/connector/available-connector.service';
+import { ConnectorService } from './services/connector.service';
+import { ConnectorMapper } from './mappers/connector.mapper';
+import { SpecificationConnectorService } from './use-cases/connector/specification-connector.service';
+import { FieldsConnectorService } from './use-cases/connector/fields-connector.service';
+import { RunDataMartService } from './use-cases/run-data-mart.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DataMart, DataStorage])],
-  controllers: [DataMartController, DataStorageController],
+  imports: [TypeOrmModule.forFeature([DataMart, DataStorage, DataMartRun])],
+  controllers: [DataMartController, DataStorageController, ConnectorController],
   providers: [
     ...dataStorageResolverProviders,
     ...dataStorageFacadesProviders,
@@ -47,6 +55,12 @@ import { DeleteDataMartService } from './use-cases/delete-data-mart.service';
     GetDataStorageService,
     CreateDataStorageService,
     UpdateDataStorageService,
+    AvailableConnectorService,
+    ConnectorService,
+    ConnectorMapper,
+    SpecificationConnectorService,
+    FieldsConnectorService,
+    RunDataMartService,
   ],
 })
 export class DataMartsModule {}
