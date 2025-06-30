@@ -46,16 +46,50 @@ class NodeJsEnvironment extends ExecutionEnvironment {
    * Execute a connector in the prepared environment
    * @param {string} environmentPath - Path to the environment
    * @param {Object} executionContext - Context for execution (env vars, etc.)
-   * @param {string | Stream | StdioPipeNamed | undefined} stdio - Standard input/output/error stream
+   * @param {string | Array | Object | undefined} stdio - Standard input/output/error stream or log capture config
    * @returns {Promise<void>} Promise that resolves when execution completes
    */
   async executeConnector(environmentPath, executionContext, stdio) {
     return new Promise((resolve, reject) => {
+      let spawnStdio = 'inherit';
+      let logCapture = null;
+
+      if (stdio && typeof stdio === 'object' && stdio.logCapture) {
+        logCapture = stdio.logCapture;
+        spawnStdio = 'pipe';
+      } else if (stdio && Array.isArray(stdio)) {
+        spawnStdio = stdio;
+      } else if (typeof stdio === 'string') {
+        spawnStdio = stdio;
+      }
+
       const node = spawn('node', ['main.js'], {
         cwd: environmentPath,
-        stdio,
+        stdio: spawnStdio,
         env: executionContext,
       });
+
+      if (logCapture && node.stdout && node.stderr) {
+        node.stdout.on('data', data => {
+          const message = data.toString();
+          if (logCapture.onStdout) {
+            logCapture.onStdout(message);
+          }
+          if (logCapture.passThrough) {
+            process.stdout.write(data);
+          }
+        });
+
+        node.stderr.on('data', data => {
+          const message = data.toString();
+          if (logCapture.onStderr) {
+            logCapture.onStderr(message);
+          }
+          if (logCapture.passThrough) {
+            process.stderr.write(data);
+          }
+        });
+      }
 
       node.on('close', code => {
         if (code === 0) {
